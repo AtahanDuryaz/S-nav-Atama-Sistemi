@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+
+{% block title %}Takvimim - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+
+<style>
+    /* FullCalendar özelleştirmeleri */
+    .fc-event-personal {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    
+    .fc-event-duty {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    
+    .calendar-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    }
+    
+    .event-legend {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+    
+    /* FullCalendar Türkçe özelleştirmeler */
+    .fc-toolbar-title {
+        font-size: 1.75em !important;
+        font-weight: bold !important;
+    }
+    
+    .fc-button {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+    
+    .fc-button:hover {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+        opacity: 0.85;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">
+        <i class="fas fa-calendar-alt me-3"></i>
+        Takvimim
+    </h1>
+    <div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
+            <i class="fas fa-plus me-2"></i>Yeni Etkinlik Ekle
+        </button>
+    </div>
+</div>
+
+<!-- Etkinlik Türleri Açıklama -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h6 class="card-title mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Etkinlik Türleri
+        </h6>
+        <div class="event-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #28a745;"></div>
+                <span>Sınav Görevi</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #17a2b8;"></div>
+                <span>Ders/Lab</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #6c757d;"></div>
+                <span>Kişisel Etkinlik</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffc107;"></div>
+                <span>Toplantı</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ana Takvim -->
+<div class="row">
+    <div class="col-12">
+        <div class="calendar-container">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Yaklaşan Etkinlikler -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Yaklaşan Görevler
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_duties %}
+                    {% for duty in upcoming_duties %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div>
+                            <h6 class="mb-1">{{ duty.exam.course.course_code }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ duty.exam.location }}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ duty.exam.exam_datetime|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                        <div>
+                            <span class="badge bg-success">{{ duty.get_status_display }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-times fa-3x mb-3 opacity-50"></i>
+                        <p>Yaklaşan görev bulunmuyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Kişisel Etkinlikler
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if events %}
+                    {% for event in events|slice:":5" %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div>
+                            <h6 class="mb-1">{{ event.title }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-tag me-1"></i>
+                                {{ event.get_event_type_display }}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ event.start_datetime|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteEvent({{ event.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-plus fa-3x mb-3 opacity-50"></i>
+                        <p>Henüz kişisel etkinlik eklenmemiş.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yeni Etkinlik Ekleme Modal -->
+<div class="modal fade" id="addEventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Yeni Etkinlik Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'add_calendar_event' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Etkinlik Başlığı</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="event_type" class="form-label">Etkinlik Türü</label>
+                        <select class="form-select" id="event_type" name="event_type" required>
+                            <option value="">Seçiniz</option>
+                            <option value="LECTURE">Ders</option>
+                            <option value="LAB">Laboratuvar</option>
+                            <option value="MEETING">Toplantı</option>
+                            <option value="OFFICE_HOURS">Ofis Saatleri</option>
+                            <option value="PERSONAL">Kişisel</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="start_datetime" class="form-label">Başlangıç</label>
+                                <input type="datetime-local" class="form-control" id="start_datetime" name="start_datetime" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="end_datetime" class="form-label">Bitiş</label>
+                                <input type="datetime-local" class="form-control" id="end_datetime" name="end_datetime" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Yer</label>
+                        <input type="text" class="form-control" id="location" name="location" placeholder="Oda, sınıf veya mekan">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_recurring" name="is_recurring">
+                        <label class="form-check-label" for="is_recurring">
+                            Tekrar Eden Etkinlik
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Ekle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // FullCalendar başlatma
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'tr',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        buttonText: {
+            today: 'Bugün',
+            month: 'Ay',
+            week: 'Hafta',
+            day: 'Gün'
+        },
+        height: 'auto',
+        
+        // Etkinlik verileri - Django'dan gelen JSON
+        events: JSON.parse('{{ calendar_events_json|escapejs }}'),
+        
+        // Etkinlik renklendirme
+        eventDidMount: function(info) {
+            var eventType = info.event.extendedProps.type;
+            if (eventType === 'duty') {
+                info.el.classList.add('fc-event-duty');
+            } else {
+                info.el.classList.add('fc-event-personal');
+            }
+        },
+        
+        // Etkinlik tıklama
+        eventClick: function(info) {
+            var eventType = info.event.extendedProps.type;
+            var content = '';
+            content += '<div class="alert alert-info">';
+            content += '<h6>' + info.event.title + '</h6>';
+            content += '<p><strong>Tarih:</strong> ' + info.event.start.toLocaleDateString('tr-TR');
+            if (info.event.end) {
+                content += ' - ' + info.event.end.toLocaleDateString('tr-TR');
+            }
+            content += '</p>';
+            
+            if (info.event.extendedProps.location) {
+                content += '<p><strong>Yer:</strong> ' + info.event.extendedProps.location + '</p>';
+            }
+            
+            if (info.event.extendedProps.description) {
+                content += '<p><strong>Açıklama:</strong> ' + info.event.extendedProps.description + '</p>';
+            }
+            content += '</div>';
+            
+            // Modal ile göster (daha sonra eklenebilir)
+            alert(info.event.title + '\n' + 'Tarih: ' + info.event.start.toLocaleDateString('tr-TR'));
+        }
+    });
+    
+    calendar.render();
+    
+    // Datetime picker için minimum tarih ayarlama
+    var now = new Date();
+    var minDateTime = now.toISOString().slice(0, 16);
+    
+    var startInput = document.getElementById('start_datetime');
+    var endInput = document.getElementById('end_datetime');
+    
+    if (startInput && endInput) {
+        startInput.min = minDateTime;
+        endInput.min = minDateTime;
+        
+        // Başlangıç tarihi değiştiğinde bitiş tarihini güncelle
+        startInput.addEventListener('change', function() {
+            var startDate = new Date(this.value);
+            var endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000)); // 2 saat ekle
+            endInput.min = this.value;
+            endInput.value = endDate.toISOString().slice(0, 16);
+        });
+    }
+});
+
+// Etkinlik silme fonksiyonu
+function deleteEvent(eventId) {
+    if (confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
+        fetch('/calendar/events/' + eventId + '/delete/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Etkinlik silinirken hata oluştu.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Bir hata oluştu.');
+        });
+    }
+}
+</script>
+{% endblock %}

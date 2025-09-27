@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+
+{% block title %}Ana Sayfa - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">
+        <i class="fas fa-tachometer-alt me-3"></i>
+        Hoş Geldiniz, {{ user.first_name }}!
+    </h1>
+    <div class="text-end">
+        <small class="text-muted">
+            <i class="fas fa-clock me-1"></i>
+            Son giriş: {{ user.last_login|date:"d.m.Y H:i" }}
+        </small>
+    </div>
+</div>
+
+<!-- Kullanıcı Bilgi Kartı -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-2 text-center">
+                        <div class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem;">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h4 class="mb-1">{{ user.full_name }}</h4>
+                        <p class="text-muted mb-1">{{ user.email }}</p>
+                        <span class="badge bg-primary">{{ user.get_role_display }}</span>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if user.is_assistant %}
+                            <div class="stats-card card border-0">
+                                <div class="card-body text-center py-3">
+                                    <div class="stats-number">{{ assistant_profile.exam_load_score|default:0 }}</div>
+                                    <div class="small">Sınav Yükü Puanı</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.has_secretary_permissions %}
+<!-- SEKRETERLİK PANELİ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">
+            <i class="fas fa-clipboard-check me-2 text-primary"></i>
+            Sekreterlik Paneli
+        </h3>
+    </div>
+</div>
+
+<!-- İstatistik Kartları -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.total_exams }}</div>
+                <div class="small">Toplam Sınavlar</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.completed_exams }}</div>
+                <div class="small">Tamamlanan</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.pending_exams }}</div>
+                <div class="small">Beklemede</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.total_assignments }}</div>
+                <div class="small">Toplam Atamalar</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yaklaşan Sınavlar -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Yaklaşan Sınavlar
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_exams %}
+                    {% for exam in upcoming_exams %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div>
+                            <h6 class="mb-1">{{ exam.course.course_code }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ exam.exam_datetime|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{{ exam.is_fully_assigned|yesno:'success,warning' }}">
+                                {{ exam.assigned_proctors_count }}/{{ exam.proctor_needed_count }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-times fa-3x mb-3 opacity-50"></i>
+                        <p>Yaklaşan sınav bulunmuyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'exam_list' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-list me-1"></i>Tüm Sınavları Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bekleyen Onaylar -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Bekleyen Onaylar
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if pending_assignments %}
+                    {% for assignment in pending_assignments %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div>
+                            <h6 class="mb-1">{{ assignment.assistant.full_name }}</h6>
+                            <small class="text-muted">{{ assignment.exam.course.course_code }}</small>
+                        </div>
+                        <div>
+                            <span class="badge status-{{ assignment.status|lower }}">
+                                {{ assignment.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-check-circle fa-3x mb-3 opacity-50"></i>
+                        <p>Bekleyen onay bulunmuyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'assignment_list' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-users me-1"></i>Tüm Atamaları Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif user.is_assistant %}
+<!-- ASİSTAN PANELİ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">
+            <i class="fas fa-user-graduate me-2 text-primary"></i>
+            Asistanlık Paneli
+        </h3>
+    </div>
+</div>
+
+<!-- Asistan İstatistikleri -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.total_duties }}</div>
+                <div class="small">Toplam Görevler</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-check fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.accepted_duties }}</div>
+                <div class="small">Kabul Edilen</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-hourglass-half fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.pending_duties }}</div>
+                <div class="small">Beklemede</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-times fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.rejected_duties }}</div>
+                <div class="small">Reddedilen</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bekleyen Görevler ve Yaklaşan Görevler -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    Bekleyen Görevler
+                </h5>
+                <span class="badge bg-warning">{{ pending_duties.count }}</span>
+            </div>
+            <div class="card-body">
+                {% if pending_duties %}
+                    {% for duty in pending_duties %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div>
+                            <h6 class="mb-1">{{ duty.exam.course.course_code }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ duty.exam.location }}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ duty.exam.exam_datetime|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                        <div class="btn-group-vertical btn-group-sm">
+                            <a href="{% url 'duty_accept' duty.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-check me-1"></i>Kabul
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#rejectModal{{ duty.id }}">
+                                <i class="fas fa-times me-1"></i>Reddet
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-clipboard-check fa-3x mb-3 opacity-50"></i>
+                        <p>Bekleyen görev bulunmuyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Yaklaşan Görevler -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Yaklaşan Görevler
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_duties %}
+                    {% for duty in upcoming_duties %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div>
+                            <h6 class="mb-1">{{ duty.exam.course.course_code }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ duty.exam.location }}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ duty.exam.exam_datetime|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                        <div>
+                            <span class="badge bg-success">Kabul Edildi</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-times fa-3x mb-3 opacity-50"></i>
+                        <p>Yaklaşan görev bulunmuyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'my_duties' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-list me-1"></i>Tüm Görevlerim
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+<!-- Hızlı Eylemler -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Hızlı Eylemler
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if user.has_secretary_permissions %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'exam_create' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus-circle me-2"></i>Yeni Sınav Oluştur
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'exam_list' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-list me-2"></i>Sınavları Listele
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'assignment_list' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-users me-2"></i>Atamaları Yönet
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.is_assistant %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'my_duties' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-tasks me-2"></i>Görevlerim
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'my_calendar' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-calendar-alt me-2"></i>Takvimim
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-3 mb-2">
+                        <a href="#" class="btn btn-outline-info w-100">
+                            <i class="fas fa-user me-2"></i>Profil Ayarları
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Red Nedeni Modal'ları -->
+{% if user.is_assistant %}
+    {% for duty in pending_duties %}
+    <div class="modal fade" id="rejectModal{{ duty.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Görev Reddi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'duty_reject' duty.id %}">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <p><strong>{{ duty.exam.course.course_code }}</strong> dersi görevini reddetmek istediğinizden emin misiniz?</p>
+                        <div class="mb-3">
+                            <label for="reason{{ duty.id }}" class="form-label">Red Nedeni:</label>
+                            <textarea class="form-control" id="reason{{ duty.id }}" name="reason" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times me-1"></i>Reddet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Kayıt Ol - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center min-vh-100 align-items-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-body p-5">
+                    <!-- Logo ve Başlık -->
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-user-plus fa-4x text-primary"></i>
+                        </div>
+                        <h2 class="card-title mb-2">Kayıt Ol</h2>
+                        <p class="text-muted">Asistan Sınav Planlayıcı Sistemi için hesap oluşturun</p>
+                    </div>
+
+                    <!-- Register Form -->
+                    <form method="post" id="registerForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Ad
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="first_name" 
+                                       name="first_name" 
+                                       placeholder="Adınız"
+                                       required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Soyad
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="last_name" 
+                                       name="last_name" 
+                                       placeholder="Soyadınız"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>E-posta Adresi
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email" 
+                                   placeholder="ornek@university.edu.tr"
+                                   required>
+                            <div class="form-text">Üniversite e-posta adresinizi kullanın</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-at me-2"></i>Kullanıcı Adı
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   placeholder="kullanici_adi"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="role" class="form-label">
+                                <i class="fas fa-id-badge me-2"></i>Rol
+                            </label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="">Rolünüzü seçin</option>
+                                <option value="ASSISTANT">Asistan</option>
+                                <option value="SECRETARY_DEPARTMENT">Bölüm Sekreteri</option>
+                                <option value="SECRETARY_FACULTY">Fakülte Sekreteri</option>
+                                <option value="SECRETARY_RECTORATE">Rektörlük Sekreteri</option>
+                            </select>
+                            <div class="form-text">Rolünüze uygun yetkiler atanacaktır</div>
+                        </div>
+
+                        <!-- Fakülte ve Bölüm Seçimi (Dinamik) -->
+                        <div id="department_fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="faculty" class="form-label">
+                                    <i class="fas fa-university me-2"></i>Fakülte
+                                </label>
+                                <select class="form-select" id="faculty" name="faculty">
+                                    <option value="">Önce fakülte seçin</option>
+                                    {% for faculty in faculties %}
+                                        <option value="{{ faculty.id }}">{{ faculty.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="department" class="form-label">
+                                    <i class="fas fa-building me-2"></i>Bölüm
+                                </label>
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">Önce fakülte seçin</option>
+                                </select>
+                                <div class="form-text" id="department_help"></div>
+                            </div>
+                        </div>
+
+                        <!-- Asistan özel alanları -->
+                        <div id="assistant_fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="phone_number" class="form-label">
+                                    <i class="fas fa-phone me-2"></i>Telefon Numarası
+                                </label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="phone_number" 
+                                       name="phone_number" 
+                                       placeholder="0555 123 45 67">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="office_location" class="form-label">
+                                    <i class="fas fa-door-open me-2"></i>Ofis Lokasyonu
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="office_location" 
+                                       name="office_location" 
+                                       placeholder="Ör: Mühendislik Fakültesi B Blok 203">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="max_weekly_hours" class="form-label">
+                                    <i class="fas fa-clock me-2"></i>Haftalık Maksimum Çalışma Saati
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="max_weekly_hours" 
+                                       name="max_weekly_hours" 
+                                       value="20" 
+                                       min="5" 
+                                       max="40"
+                                       placeholder="20">
+                                <div class="form-text">Haftalık gözetmenlik için ayırabileceğiniz maksimum saat</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password1" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Şifre
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password1" 
+                                       name="password1" 
+                                       placeholder="Güçlü şifre oluşturun"
+                                       required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password2" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Şifre Tekrar
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password2" 
+                                       name="password2" 
+                                       placeholder="Şifreyi tekrar girin"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                Kullanım şartlarını ve gizlilik politikasını kabul ediyorum
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Kayıt Ol
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Giriş Yap Linki -->
+                    <div class="text-center">
+                        <p class="mb-0">Zaten hesabınız var mı?</p>
+                        <a href="{% url 'login' %}" class="btn btn-outline-secondary mt-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+                        </a>
+                    </div>
+
+                    <!-- Önemli Bilgi -->
+                    <div class="alert alert-warning mt-4" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Önemli:</strong> Kayıt işleminiz tamamlandıktan sonra, hesabınızın sistem yöneticisi 
+                        tarafından onaylanması gerekmektedir. Onay sürecinde e-posta ile bilgilendirileceksiniz.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const departmentFields = document.getElementById('department_fields');
+    const assistantFields = document.getElementById('assistant_fields');
+    const facultySelect = document.getElementById('faculty');
+    const departmentSelect = document.getElementById('department');
+    const departmentHelp = document.getElementById('department_help');
+    
+        // Rol seçimine göre alanları göster/gizle
+        roleSelect.addEventListener('change', function() {
+            const selectedRole = this.value;
+            
+            // Önce tüm alanları gizle
+            departmentFields.style.display = 'none';
+            assistantFields.style.display = 'none';
+            
+            // Gerekli alanları temizle
+            departmentSelect.required = false;
+            facultySelect.required = false;
+            
+            if (selectedRole === 'ASSISTANT') {
+                // Asistan için her iki alan da gerekli
+                departmentFields.style.display = 'block';
+                assistantFields.style.display = 'block';
+                
+                // Bölüm alanını tekrar göster
+                departmentSelect.style.display = 'block';
+                departmentSelect.parentElement.style.display = 'block';
+                
+                departmentSelect.required = true;
+                facultySelect.required = true;
+                departmentHelp.textContent = 'Asistan olarak çalışacağınız bölümü seçin';
+                
+            } else if (selectedRole === 'SECRETARY_DEPARTMENT') {
+                // Bölüm sekreteri için bölüm seçimi zorunlu
+                departmentFields.style.display = 'block';
+                
+                // Bölüm alanını tekrar göster
+                departmentSelect.style.display = 'block';
+                departmentSelect.parentElement.style.display = 'block';
+                
+                departmentSelect.required = true;
+                facultySelect.required = true; // Fakülte seçimi bölüm için gerekli
+                departmentHelp.textContent = 'Sekreterlik yapacağınız bölümü seçin';
+                
+            } else if (selectedRole === 'SECRETARY_FACULTY') {
+                // Fakülte sekreteri için sadece fakülte zorunlu
+                departmentFields.style.display = 'block';
+                facultySelect.required = true;
+                departmentSelect.required = false;
+                
+                // Bölüm alanını gizle ve temizle - fakülte sekreteri bölüm seçmez
+                departmentSelect.style.display = 'none';
+                departmentSelect.value = '';
+                departmentSelect.parentElement.style.display = 'none';
+                departmentHelp.textContent = 'Fakülte sekreteri olarak seçilen fakültenin tamamında yetkiniz olacak';
+                
+            } else if (selectedRole === 'SECRETARY_RECTORATE') {
+                // Rektörlük sekreteri için fakülte/bölüm alanlarını hiç gösterme
+                departmentFields.style.display = 'none';
+                facultySelect.required = false;
+                departmentSelect.required = false;
+                
+                // Alanları temizle
+                facultySelect.value = '';
+                departmentSelect.value = '';
+            }
+        });    // Fakülte seçimi değiştiğinde bölümleri güncelle
+    facultySelect.addEventListener('change', function() {
+        const facultyId = this.value;
+        
+        // Bölüm listesini temizle
+        departmentSelect.innerHTML = '<option value="">Bölüm seçin</option>';
+        
+        if (facultyId) {
+            // AJAX ile bölümleri getir
+            fetch(`/api/departments/?faculty_id=${facultyId}`)
+                .then(response => response.json())
+                .then(departments => {
+                    departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.id;
+                        option.textContent = dept.name;
+                        departmentSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Bölümler yüklenirken hata:', error);
+                });
+        }
+    });
+    
+    // Form gönderimi öncesi validation
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const selectedRole = roleSelect.value;
+        const facultySelected = facultySelect.value;
+        const departmentSelected = departmentSelect.value;
+        
+        // Hiyerarşik rol bazlı validasyonlar
+        if (selectedRole === 'ASSISTANT' && !departmentSelected) {
+            e.preventDefault();
+            alert('Asistanlar için bölüm seçimi zorunludur.');
+            return;
+        }
+        
+        if (selectedRole === 'SECRETARY_DEPARTMENT') {
+            if (!departmentSelected) {
+                e.preventDefault();
+                alert('Bölüm sekreteri için bölüm seçimi zorunludur.');
+                return;
+            }
+        }
+        
+        if (selectedRole === 'SECRETARY_FACULTY') {
+            if (!facultySelected) {
+                e.preventDefault();
+                alert('Fakülte sekreteri için fakülte seçimi zorunludur.');
+                return;
+            }
+        }
+        
+        // SECRETARY_RECTORATE için hiçbir alan zorunlu değil
+        
+        // Şifre kontrolü
+        const password1 = document.getElementById('password1').value;
+        const password2 = document.getElementById('password2').value;
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Şifreler eşleşmiyor!');
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

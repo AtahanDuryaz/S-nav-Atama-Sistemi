@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Giriş Yap - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center min-vh-100 align-items-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card">
+                <div class="card-body p-5">
+                    <!-- Logo ve Başlık -->
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-graduation-cap fa-4x text-primary"></i>
+                        </div>
+                        <h2 class="card-title mb-2">Hoş Geldiniz</h2>
+                        <p class="text-muted">Asistan Sınav Planlayıcı Sistemine giriş yapın</p>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>E-posta Adresi
+                            </label>
+                            <input type="email" 
+                                   class="form-control form-control-lg" 
+                                   id="email" 
+                                   name="username" 
+                                   placeholder="ornek@university.edu.tr"
+                                   required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-2"></i>Şifre
+                            </label>
+                            <input type="password" 
+                                   class="form-control form-control-lg" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Şifrenizi girin"
+                                   required>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember_me">
+                            <label class="form-check-label" for="remember_me">
+                                Beni Hatırla
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Kayıt Ol Linki -->
+                    <div class="text-center">
+                        <p class="mb-0">Henüz hesabınız yok mu?</p>
+                        <a href="{% url 'register' %}" class="btn btn-outline-secondary mt-2">
+                            <i class="fas fa-user-plus me-2"></i>Kayıt Ol
+                        </a>
+                    </div>
+
+                    <!-- Bilgilendirme -->
+                    <div class="alert alert-info mt-4" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Dikkat:</strong> Kayıt olduktan sonra hesabınızın admin tarafından onaylanması gerekmektedir.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Kullanıcıları (Geliştirme aşamasında) -->
+            {% if debug %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0 text-warning">
+                        <i class="fas fa-flask me-2"></i>Test Kullanıcıları (Geliştirme)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        <strong>Admin:</strong> admin@examplanner.com<br>
+                        <strong>Sekreter:</strong> sekreter@university.edu.tr<br>
+                        <strong>Asistan:</strong> asistan@university.edu.tr<br>
+                        <strong>Şifre:</strong> test123456
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
