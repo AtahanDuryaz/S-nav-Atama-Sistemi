@@ -5,10 +5,10 @@ AJAX çağrıları ve API endpoints: Bölüm listeleri, auto-complete vb.
 
 from .base import *
 
-@login_required
 def get_departments_by_faculty(request):
     """
     Fakülteye göre bölümleri getir (AJAX)
+    Kayıt sayfasında da kullanıldığı için login gerektirmiyor
     """
     faculty_id = request.GET.get('faculty_id')
     if faculty_id:
